@@ -1,4 +1,3 @@
-from itertools import chain
 import graphlib
 import os
 import unittest
