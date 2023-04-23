@@ -8436,8 +8436,6 @@ class SpecialAttrsTests(BaseTestCase):
                 for proto in range(pickle.HIGHEST_PROTOCOL + 1):
                     s = pickle.dumps(cls, proto)
                     loaded = pickle.loads(s)
-                    if cls is not loaded:
-                        breakpoint()
                     self.assertIs(cls, loaded)
 
     TypeName = typing.NewType('SpecialAttrsTests.TypeName', Any)
