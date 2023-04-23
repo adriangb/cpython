@@ -350,15 +350,22 @@ def _tp_cache(func=None, /, *, typed=False):
         # This breaks a reference that can be problematic when combined with
         # C API extensions that leak references to types. See GH-98253.
 
-        cache = functools.lru_cache(typed=typed)(func)
-        _caches[func] = cache
+        def func_wrapper(_, *args, **kwds):
+            """Ignore the first argument, which is the __args__ for each item
+            used to make int | str not the same object as str | int
+            """
+            return func(*args, **kwds)
+
+        cache = functools.lru_cache(typed=typed)(func_wrapper)
+        _caches[func_wrapper] = cache
         _cleanups.append(cache.cache_clear)
         del cache
 
         @functools.wraps(func)
         def inner(*args, **kwds):
             try:
-                return _caches[func](*args, **kwds)
+                key = tuple((getattr(v, '__args__', None) for v in (*args, *kwds.values())))
+                return _caches[func_wrapper](key, *args, **kwds)
             except TypeError:
                 pass  # All real errors (not unhashable args) are raised below.
             return func(*args, **kwds)
