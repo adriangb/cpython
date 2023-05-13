@@ -3907,6 +3907,31 @@ class GenericTests(BaseTestCase):
         class MyChain(typing.ChainMap[str, T]): ...
         self.assertIs(MyChain[int]().__class__, MyChain)
         self.assertEqual(MyChain[int]().__orig_class__, MyChain[int])
+    
+    @cpython_only
+    def test_special_caching(self):
+        self.clear_caches()
+        types = [
+            Union[int, str],
+            Optional[int],
+            List[Union[int, str]],
+            List[List[Union[int, str]]],
+        ]
+        for typ in types:
+            with self.subTest(typ=typ):
+                self.assertIs(typ, typ)
+
+        self.assertIsNot(Union[str, int], Union[int, str])
+        self.assertIsNot(Union[str, None], Union[None, str])
+
+        self.assertIsNot(Union[type(None), int], Optional[int])
+        self.assertIs(Union[int, type(None)], Optional[int])
+
+        self.assertIsNot(List[Union[str, int]],
+                         List[Union[int, str]])
+        
+        self.assertIsNot(List[List[Union[str, int]]],
+                         List[List[Union[int, str]]])
 
     def test_all_repr_eq_any(self):
         typing = import_fresh_module("typing")

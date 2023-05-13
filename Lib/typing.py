@@ -340,6 +340,10 @@ _cleanups = []
 _caches = {}
 
 
+def _args_to_ids(args):
+    return tuple(id(a) for a in args) if args is not None else ()
+
+
 def _tp_cache(func=None, /, *, typed=False):
     """Internal wrapper caching __getitem__ of generic types with a fallback to
     original function for non-hashable arguments.
@@ -364,7 +368,10 @@ def _tp_cache(func=None, /, *, typed=False):
         @functools.wraps(func)
         def inner(*args, **kwds):
             try:
-                key = tuple((getattr(v, '__args__', None) for v in (*args, *kwds.values())))
+                key = tuple((_args_to_ids(getattr(v, '__args__', None)) for v in (*args, *kwds.values())))
+            except TypeError:
+                key = ()
+            try:
                 return _caches[func_wrapper](key, *args, **kwds)
             except TypeError:
                 pass  # All real errors (not unhashable args) are raised below.
